@@ -42,6 +42,41 @@ class FCFSSimulatorTest {
     }
 
     @Test
+    @DisplayName("Video Example")
+    void testBasicFCFS2() {
+        processes.add(new ProcessModel("P1", 5, 0, 1)); // Ends at 3
+        processes.add(new ProcessModel("P2", 3, 1, 2)); // Ends at 3
+        processes.add(new ProcessModel("P3", 8, 2, 3)); // Ends at 3
+        processes.add(new ProcessModel("P4", 6, 3, 5)); // Ends at 3
+        simulator = new FCFSSimulator(processes);
+
+        while (simulator.executeStep());
+
+        ProcessModel p1 = processes.get(0);
+        ProcessModel p2 = processes.get(1);
+        ProcessModel p3 = processes.get(2);
+        ProcessModel p4 = processes.get(3);
+
+
+        assertEquals(5, p1.getCompletionTime(), "P1 should have 5 completion time");
+        assertEquals(5, p1.getTurnaroundTime(), "P1 turnaround should be 5");
+        assertEquals(0, p1.getWaitingTime(), "P1 should have 0 waiting time");
+
+
+        assertEquals(8, p2.getCompletionTime(), "P2 should have 8 completion time");
+        assertEquals(7, p2.getTurnaroundTime(), "P2 turnaround should be 7");
+        assertEquals(4, p2.getWaitingTime(), "P2 should have 4 waiting time");
+
+        assertEquals(16, p3.getCompletionTime(), "P3 should have 16 completion time");
+        assertEquals(14, p3.getTurnaroundTime(), "P3 turnaround should be 14");
+        assertEquals(6, p3.getWaitingTime(), "P3 should have 6 waiting time");
+
+        assertEquals(22, p4.getCompletionTime(), "P4 should have 22 completion time");
+        assertEquals(19, p4.getTurnaroundTime(), "P4 turnaround should be 19");
+        assertEquals(13, p4.getWaitingTime(), "P4 should have 13 waiting time");
+    }
+
+    @Test
     @DisplayName("Simultaneous Arrival: Ties broken by Queue order")
     void testSimultaneousArrival() {
         // Both arrive at 0. P1 is added first.

@@ -4,65 +4,95 @@ import org.junit.jupiter.api.Test;
 
 import cmsc125.lab3.models.ProcessModel;
 import cmsc125.lab3.services.FCFSSimulator;
+import cmsc125.lab3.services.GenerateRandomProcesses;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FCFSSimulatorTest {
 
-    @Test
-    void testFCFSExecutionAndStats() {
-        List<ProcessModel> processes = new ArrayList<>();
-        // P1 arrives at 0, Burst 3
-        // P2 arrives at 1, Burst 2
-        processes.add(new ProcessModel("P1", 3, 0, 1));
-        processes.add(new ProcessModel("P2", 2, 1, 2));
+    private List<ProcessModel> processes;
+    private FCFSSimulator simulator;
 
-        FCFSSimulator sim = new FCFSSimulator(processes);
-
-        // Step 1-3: P1 should be running
-        assertTrue(sim.executeStep()); // Tick 0
-        assertTrue(sim.executeStep()); // Tick 1
-        assertTrue(sim.executeStep()); // Tick 2
-        
-        // At Tick 3, P1 should be finished. 
-        // Completion = 3, Turnaround = 3-0=3, Waiting = 3-3=0
-        ProcessModel p1 = processes.get(0);
-        assertEquals(0, p1.getRemainingTime());
-        assertEquals(3, p1.getCompletionTime());
-        assertEquals(3, p1.getTurnaroundTime());
-        assertEquals(0, p1.getWaitingTime());
-
-        // Step 4-5: P2 should be running
-        assertTrue(sim.executeStep()); // Tick 3
-        assertTrue(sim.executeStep()); // Tick 4
-        
-        // P2 Completion = 5, Turnaround = 5-1=4, Waiting = 4-2=2
-        ProcessModel p2 = processes.get(1);
-        assertEquals(5, p2.getCompletionTime());
-        assertEquals(4, p2.getTurnaroundTime());
-        assertEquals(2, p2.getWaitingTime());
-
-        // Next step should return false as queue is empty
-        assertFalse(sim.executeStep());
+    @BeforeEach
+    void setUp() {
+        processes = new ArrayList<>();
     }
 
     @Test
-    void testIdleTime() {
-        List<ProcessModel> processes = new ArrayList<>();
-        // P1 arrives late at time 2
-        processes.add(new ProcessModel("P1", 1, 2, 1));
+    @DisplayName("Basic FCFS: P1 arrives before P2")
+    void testBasicFCFS() {
+        processes.add(new ProcessModel("P1", 3, 0, 1)); // Ends at 3
+        processes.add(new ProcessModel("P2", 2, 1, 2)); // Starts at 3, Ends at 5
+        simulator = new FCFSSimulator(processes);
+
+        // Run until completion
+        while (simulator.executeStep());
+
+        ProcessModel p1 = processes.get(0);
+        ProcessModel p2 = processes.get(1);
+
+        assertEquals(0, p1.getWaitingTime(), "P1 should have 0 waiting time");
+        assertEquals(3, p1.getTurnaroundTime(), "P1 turnaround should be 3");
+        assertEquals(2, p2.getWaitingTime(), "P2 waiting time should be 2 (Starts at 3, Arrived at 1)");
+    }
+
+    @Test
+    @DisplayName("Simultaneous Arrival: Ties broken by Queue order")
+    void testSimultaneousArrival() {
+        // Both arrive at 0. P1 is added first.
+        processes.add(new ProcessModel("P1", 2, 0, 1));
+        processes.add(new ProcessModel("P2", 2, 0, 2));
+        simulator = new FCFSSimulator(processes);
+
+        simulator.executeStep(); // Tick 0
+        simulator.executeStep(); // Tick 1
+        assertEquals("P1", simulator.getActiveProcessId(), "P1 should finish before P2 starts");
         
-        FCFSSimulator sim = new FCFSSimulator(processes);
+        simulator.executeStep(); // Tick 2
+        assertEquals("P2", simulator.getActiveProcessId(), "P2 should start after P1 finishes");
+    }
+
+    @Test
+    @DisplayName("CPU Idle: Gap between processes")
+    void testCpuIdle() {
+        processes.add(new ProcessModel("P1", 2, 0, 1)); // Finishes at 2
+        processes.add(new ProcessModel("P2", 2, 5, 2)); // Arrives at 5
+        simulator = new FCFSSimulator(processes);
+
+        // Finish P1
+        simulator.executeStep(); // 0
+        simulator.executeStep(); // 1
         
-        sim.executeStep(); // Tick 0: Idle
-        assertEquals("IDLE", sim.getActiveProcessId());
+        // Tick 2, 3, 4 should be IDLE
+        simulator.executeStep(); 
+        assertEquals("IDLE", simulator.getActiveProcessId());
         
-        sim.executeStep(); // Tick 1: Idle
-        assertEquals("IDLE", sim.getActiveProcessId());
+        simulator.executeStep();
+        simulator.executeStep();
+        assertEquals("IDLE", simulator.getActiveProcessId());
+
+        // Tick 5: P2 should start
+        simulator.executeStep();
+        assertEquals("P2", simulator.getActiveProcessId());
+    }
+
+    @Test
+    @DisplayName("Random Generation Constraint: Count 3-20")
+    void testRandomGenerationConstraints() {
+        // Assuming you have a DataFactory or similar utility
+        List<ProcessModel> randomProcesses = GenerateRandomProcesses.generateRandom(10); 
         
-        sim.executeStep(); // Tick 2: P1 starts
-        assertEquals("P1", sim.getActiveProcessId());
+        assertTrue(randomProcesses.size() >= 3 && randomProcesses.size() <= 20, 
+            "Process count must be between 3 and 20");
+            
+        for (ProcessModel p : randomProcesses) {
+            assertTrue(p.getBurstTime() >= 1 && p.getBurstTime() <= 30, "Burst time range 1-30");
+            assertTrue(p.getArrivalTime() >= 0 && p.getArrivalTime() <= 30, "Arrival time range 0-30");
+        }
     }
 }

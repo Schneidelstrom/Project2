@@ -2,7 +2,6 @@ package cmsc125.lab3;
 
 import cmsc125.lab3.controllers.AppController;
 import cmsc125.lab3.views.MainFrame;
-
 import javax.swing.SwingUtilities;
 
 public class App {

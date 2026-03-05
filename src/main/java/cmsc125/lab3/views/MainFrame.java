@@ -11,7 +11,10 @@ public class MainFrame extends JFrame {
 
     private final CardLayout cardLayout;
     private final JPanel cardPanel;
-    private DashboardView dashboardView;
+
+    // Keep views references so controller can access them
+    private final SplashView splashView;
+    private final DashboardView dashboardView;
 
     public MainFrame() {
         setTitle("ChronOS");
@@ -23,7 +26,7 @@ public class MainFrame extends JFrame {
         cardPanel = new JPanel(cardLayout);
 
         // Instantiate Panel Views
-        SplashView splashView = new SplashView();
+        splashView = new SplashView();
         dashboardView = new DashboardView();
 
         cardPanel.add(splashView, VIEW_SPLASH);
@@ -34,6 +37,7 @@ public class MainFrame extends JFrame {
     // Method called by Controller to switch to Dashboard
     public void showDashboard() {
         cardLayout.show(cardPanel, VIEW_DASHBOARD);
+        splashView.stopAnimation();
     }
 
     public DashboardView getDashboardView() {

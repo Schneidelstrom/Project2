@@ -35,8 +35,7 @@ public class AppController {
     // Splash screen 3 seconds delay for loading animation
     public void startApplication() {
         Timer transitionTimer = new Timer(1000, e -> mainFrame.showDashboard());
-
-        transitionTimer.setRepeats(false);
+        transitionTimer.setRepeats(false); // Run once
         transitionTimer.start();
     }
 }

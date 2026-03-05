@@ -16,7 +16,7 @@ import java.awt.Image;
 import java.net.URL;
 
 public class DashboardView extends JPanel {
-    private JButton playButton, howToPlayButton, settingsButton;
+    private final JButton playButton, howToPlayButton, settingsButton;
 
     public DashboardView() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -51,7 +51,7 @@ public class DashboardView extends JPanel {
         add(iconsPanel);
     }
 
-    // Method to create  icon with text beneath it
+    // Method to create icon with text beneath it
     private JButton createIconButton(String labelText, String iconFileName) {
         JButton button = new JButton(labelText);
 
@@ -67,10 +67,13 @@ public class DashboardView extends JPanel {
 
         // Load and scale image
         URL imgURL = getClass().getResource("/icons/" + iconFileName);
-        ImageIcon icon = new ImageIcon(imgURL);
-        Image img = icon.getImage();
-        Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-        button.setIcon(new ImageIcon(scaledImg));
+
+        if (imgURL != null) {
+            ImageIcon icon = new ImageIcon(imgURL);
+            Image img = icon.getImage();
+            Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+            button.setIcon(new ImageIcon(scaledImg));
+        } else System.err.println("Warning: Could not find image " + iconFileName);
 
         return button;
     }

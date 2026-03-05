@@ -7,9 +7,10 @@ import java.awt.*;
 
 public class SplashView extends JPanel {
     private static final Font TITLE_FONT = new Font("Serif", Font.BOLD, 100);
+    private final SpinningO oSpinner;
 
     public SplashView() {
-        setLayout(new GridBagLayout());
+        setLayout(new GridBagLayout()); // Center component on screen
 
         // Container to hold text and animation side-by-side
         JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
@@ -21,7 +22,7 @@ public class SplashView extends JPanel {
         chronLabel.setForeground(Color.black);
 
         // Custom "O" Loading Spinner
-        SpinningO oSpinner = new SpinningO();
+        oSpinner = new SpinningO();
 
         // "S" Label
         JLabel sLabel = new JLabel("S");
@@ -34,28 +35,40 @@ public class SplashView extends JPanel {
         add(textPanel);
     }
 
+    // Called by MainFrame when switching away from Splash Screen
+    public void stopAnimation() {
+        oSpinner.stopTimer();
+    }
+
+    // Custom inner class for spinning animation
     private class SpinningO extends JPanel {
         private int angle = 0;
+        private final Timer animationTimer;
 
         public SpinningO() {
             setPreferredSize(new Dimension(80, 100));
             setOpaque(false);
 
             // Internal UI timer to update graphic "O" continuously
-            Timer animationTimer = new Timer(20, e -> {
+            animationTimer = new Timer(20, e -> {
                 angle -= 5; // Spin clockwise
 
-                if (angle <= -360) angle = 0;
+                if (angle <= -360) angle = 0; // Reset to prevent integer overflow over time
 
-                repaint(); // Redraw arc
+                repaint(); //  Trigger arc redraw
             });
             animationTimer.start();
+        }
+
+        public void stopTimer() {
+            if (animationTimer != null && animationTimer.isRunning()) animationTimer.stop();
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
+            // Cast to Graphics2D for better drawing features
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

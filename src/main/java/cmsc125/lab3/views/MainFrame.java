@@ -8,17 +8,19 @@ public class MainFrame extends JFrame {
     // Constants for CardLayout routing
     private static final String VIEW_SPLASH = "SPLASH";
     private static final String VIEW_DASHBOARD = "DASHBOARD";
+    private static final String VIEW_SETTINGS = "SETTINGS";
 
     private final CardLayout cardLayout;
     private final JPanel cardPanel;
 
-    // Keep views references so controller can access them
+    // Views references so controller can access them
     private final SplashView splashView;
     private final DashboardView dashboardView;
+    private final SettingsView settingsView;
 
     public MainFrame() {
         setTitle("ChronOS");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH); // Open in full screen
 
         // Set up CardLayout for panel swaps
@@ -28,9 +30,12 @@ public class MainFrame extends JFrame {
         // Instantiate Panel Views
         splashView = new SplashView();
         dashboardView = new DashboardView();
+        settingsView = new SettingsView();
 
         cardPanel.add(splashView, VIEW_SPLASH);
         cardPanel.add(dashboardView, VIEW_DASHBOARD);
+        cardPanel.add(settingsView, VIEW_SETTINGS);
+
         add(cardPanel);
     }
 
@@ -40,7 +45,10 @@ public class MainFrame extends JFrame {
         splashView.stopAnimation();
     }
 
-    public DashboardView getDashboardView() {
-        return dashboardView;
+    public void showSettings() {
+        cardLayout.show(cardPanel, VIEW_SETTINGS);
     }
+
+    public DashboardView getDashboardView() { return dashboardView; }
+    public SettingsView getSettingsView() { return settingsView; }
 }

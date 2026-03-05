@@ -16,7 +16,7 @@ import java.awt.Image;
 import java.net.URL;
 
 public class DashboardView extends JPanel {
-    private final JButton playButton, howToPlayButton, settingsButton;
+    private final JButton playButton, howToPlayButton, settingsButton, exitButton;
 
     public DashboardView() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -39,6 +39,13 @@ public class DashboardView extends JPanel {
         howToPlayButton = createIconButton("How to Play", "htp.png");
         settingsButton = createIconButton("Settings", "settings.png");
 
+        JPanel exitPanel = new JPanel();
+        exitPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        exitPanel.setOpaque(false);
+
+        exitButton = createIconButton("Exit", "exit.png");
+        exitPanel.add(exitButton);
+
         iconsPanel.add(playButton);
         iconsPanel.add(howToPlayButton);
         iconsPanel.add(settingsButton);
@@ -49,6 +56,9 @@ public class DashboardView extends JPanel {
         add(taglineLabel);
         add(Box.createVerticalStrut(500));
         add(iconsPanel);
+        add(Box.createVerticalGlue());
+        add(exitPanel);
+        add(Box.createVerticalStrut(50));
     }
 
     // Method to create icon with text beneath it
@@ -82,4 +92,5 @@ public class DashboardView extends JPanel {
     public JButton getPlayButton() { return playButton; }
     public JButton getHowToPlayButton() { return howToPlayButton; }
     public JButton getSettingsButton() { return settingsButton; }
-}
+    public JButton getExitButton() { return exitButton; }
+    }

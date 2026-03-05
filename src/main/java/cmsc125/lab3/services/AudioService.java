@@ -3,39 +3,62 @@ package cmsc125.lab3.services;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import java.net.URL;
 
 public class AudioService {
-    private Clip currentClip; // Holds audio in memory to play/stop it
+    private Clip currentSfxClip, currentBgmClip;
 
-    // Method to load and play .wav file
-    public void playMusic(String filePath) {
+    // Play file as SFX, applying current volume and mute settings
+    public void playSFX(String filePath, int volumeLevel, boolean isEnabled) {
+        if (!isEnabled) return; // Don't play if disabled
+
         try {
             // Look for audio file in resources folder
             URL audioURL = getClass().getResource(filePath);
             if (audioURL == null) {
                 System.err.println("Warning: Could not find audio file at " + filePath);
-                return; // Exit to avoid crash
+                return;
             }
 
-            // Load audio and open clip
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioURL);
-            currentClip = AudioSystem.getClip();
-            currentClip.open(audioStream);
+            currentSfxClip = AudioSystem.getClip();
+            currentSfxClip.open(audioStream);
 
-            // Start playing
-            currentClip.start();
+            setClipVolume(currentSfxClip, volumeLevel);
+            currentSfxClip.start();
 
         } catch (Exception e) {
-            System.err.println("Error playing audio: " + e.getMessage());
+            System.err.println("Error playing SFX: " + e.getMessage());
         }
     }
 
-    // Method to safely stop music and free up computer memory
-    public void stopMusic() {
-        if (currentClip != null && currentClip.isRunning()) {
-            currentClip.stop();
-            currentClip.close();
+    // Live update for SFX volume (if currently playing)
+    public void updateSfxVolume(int volumeLevel, boolean isEnabled) {
+        if (currentSfxClip != null && currentSfxClip.isOpen()) {
+            if (!isEnabled || volumeLevel == 0) setClipVolume(currentSfxClip, 0); // Mute
+            else setClipVolume(currentSfxClip, volumeLevel);
+        }
+    }
+
+    public void stopSFX() {
+        if (currentSfxClip != null && currentSfxClip.isRunning()) {
+            currentSfxClip.stop();
+            currentSfxClip.close();
+        }
+    }
+
+    //  Method for audio volume adjustment
+    private void setClipVolume(Clip clip, int volumeLevel) {
+        if (clip == null || !clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) return;
+
+        FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+
+        if (volumeLevel <= 0) gainControl.setValue(gainControl.getMinimum()); // Full mute
+        else {
+            // Convert 0-100 to Decibels (Logarithmic scale)
+            float decibels = 20f * (float) Math.log10(volumeLevel / 100f);
+            gainControl.setValue(decibels);
         }
     }
 }

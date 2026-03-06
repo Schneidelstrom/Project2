@@ -13,6 +13,7 @@ public class MainFrame extends JFrame {
     private final SettingsView settingsView;
     private final SimulatorSetupView setupView;
     private final SimulationView simulationView;
+    private final HelpView helpView;
 
     public MainFrame() {
         setTitle("ChronOS");
@@ -27,12 +28,14 @@ public class MainFrame extends JFrame {
         settingsView = new SettingsView();
         setupView = new SimulatorSetupView();
         simulationView = new SimulationView();
+        helpView = new HelpView();
 
         cardPanel.add(splashView, "SPLASH");
         cardPanel.add(dashboardView, "DASHBOARD");
         cardPanel.add(settingsView, "SETTINGS");
         cardPanel.add(setupView, "SETUP");
         cardPanel.add(simulationView, "SIMULATION");
+        cardPanel.add(helpView, "HELP");
 
         add(cardPanel);
     }
@@ -45,9 +48,11 @@ public class MainFrame extends JFrame {
     public void showSettings() { cardLayout.show(cardPanel, "SETTINGS"); }
     public void showSetup() { cardLayout.show(cardPanel, "SETUP"); }
     public void showSimulation() { cardLayout.show(cardPanel, "SIMULATION"); }
+    public void showHelp() { cardLayout.show(cardPanel, "HELP"); }
 
     public DashboardView getDashboardView() { return dashboardView; }
     public SettingsView getSettingsView() { return settingsView; }
     public SimulatorSetupView getSetupView() { return setupView; }
     public SimulationView getSimulationView() { return simulationView; }
+    public HelpView getHelpView() { return helpView; }
 }

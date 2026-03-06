@@ -39,6 +39,8 @@ public class AppController {
         mainFrame.getDashboardView().getSettingsButton().addActionListener(e -> mainFrame.showSettings());
         mainFrame.getDashboardView().getExitButton().addActionListener(e -> confirmAndExit());
         mainFrame.getSettingsView().getBackBtn().addActionListener(e -> mainFrame.showDashboard());
+        mainFrame.getDashboardView().getHowToPlayButton().addActionListener(e -> mainFrame.showHelp());
+        mainFrame.getHelpView().getBackBtn().addActionListener(e -> mainFrame.showDashboard());
 
         setupSettingsListeners();
         setupSimulationListeners();

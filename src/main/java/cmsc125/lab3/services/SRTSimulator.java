@@ -7,38 +7,32 @@ import java.util.List;
 public class SRTSimulator extends BaseSimulator {
 
     public SRTSimulator(List<ProcessModel> processes) {
-        // FIXED: Sort by Remaining Time instead of Burst Time
-        super(processes, Comparator
-            .comparingInt(ProcessModel::getRemainingTime)
-            .thenComparingInt(ProcessModel::getArrivalTime));
+        super(processes, Comparator.comparingInt(ProcessModel::getRemainingTime).thenComparingInt(ProcessModel::getArrivalTime));
     }
 
     @Override
     public boolean executeStep() {
-        if (arrivalQueue.isEmpty() && processQueue.isEmpty() && currentRunningProcess == null) {
-            return false;
-        }
+        if (arrivalQueue.isEmpty() && processQueue.isEmpty() && currentRunningProcess == null) return false;
 
+        // Handle arrivals
         boolean shorterJobArrived = false;
-
         while (!arrivalQueue.isEmpty() && arrivalQueue.peek().getArrivalTime() <= currentTime) {
             ProcessModel arrived = arrivalQueue.poll();
             processQueue.add(arrived);
 
-            if (currentRunningProcess != null && arrived.getRemainingTime() < currentRunningProcess.getRemainingTime()) {
-                shorterJobArrived = true;
-            }
+            if (currentRunningProcess != null && arrived.getRemainingTime() < currentRunningProcess.getRemainingTime()) shorterJobArrived = true;
         }
 
+        // Preemption logic
         if (shorterJobArrived && currentRunningProcess != null) {
             processQueue.add(currentRunningProcess);
             currentRunningProcess = null;
         }
 
-        if (currentRunningProcess == null && !processQueue.isEmpty()) {
-            currentRunningProcess = processQueue.poll();
-        }
+        // Select Best Candidate (Shortest Remaining Time)
+        if (currentRunningProcess == null && !processQueue.isEmpty()) currentRunningProcess = processQueue.poll();
 
+        // 4. Run
         if (currentRunningProcess != null) {
             this.activeProcessId = currentRunningProcess.getProcessId();
             currentRunningProcess.setRemainingTime(currentRunningProcess.getRemainingTime() - 1);
@@ -48,9 +42,7 @@ public class SRTSimulator extends BaseSimulator {
                 calculateStats(currentRunningProcess);
                 currentRunningProcess = null;
             }
-        } else {
-            this.activeProcessId = "IDLE";
-        }
+        } else this.activeProcessId = "IDLE";
 
         currentTime++;
         return true;

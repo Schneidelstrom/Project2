@@ -15,6 +15,7 @@ public class SimulationView extends JPanel {
     private final JLabel infoLabel, timeLabel, avgWtLabel, avgTatLabel;
     private final DefaultTableModel resultTableModel;
     private final GanttChartPanel ganttChartPanel;
+    private final JScrollPane ganttScrollPane;
     private final JButton newBatchBtn, restartBtn, togglePauseBtn, exitBtn;
     private final JComboBox<String> speedCombo; // NEW: Speed controller
 
@@ -54,6 +55,7 @@ public class SimulationView extends JPanel {
         add(centerPanel, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
+
         JPanel ganttContainer = new JPanel(new BorderLayout());
         ganttContainer.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
@@ -63,8 +65,13 @@ public class SimulationView extends JPanel {
         ganttContainer.add(timeLabel, BorderLayout.NORTH);
 
         ganttChartPanel = new GanttChartPanel();
-        ganttChartPanel.setPreferredSize(new Dimension(800, 120));
-        ganttContainer.add(ganttChartPanel, BorderLayout.CENTER);
+        ganttScrollPane = new JScrollPane(ganttChartPanel);
+        ganttScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        ganttScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        ganttScrollPane.setPreferredSize(new Dimension(800, 140));
+        ganttScrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        ganttContainer.add(ganttScrollPane, BorderLayout.CENTER);
         bottomPanel.add(ganttContainer, BorderLayout.CENTER);
 
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
@@ -77,7 +84,6 @@ public class SimulationView extends JPanel {
         newBatchBtn.setFont(btnFont); restartBtn.setFont(btnFont);
         togglePauseBtn.setFont(btnFont); exitBtn.setFont(btnFont);
 
-        // NEW: Speed Controller UI
         JLabel speedLabel = new JLabel("Speed:");
         speedLabel.setFont(btnFont);
         speedCombo = new JComboBox<>(new String[]{"1.0x", "1.5x", "2.0x", "3.0x", "5.0x"});
@@ -86,8 +92,8 @@ public class SimulationView extends JPanel {
         controlsPanel.add(newBatchBtn);
         controlsPanel.add(restartBtn);
         controlsPanel.add(togglePauseBtn);
-        controlsPanel.add(speedLabel);    // ADDED
-        controlsPanel.add(speedCombo);    // ADDED
+        controlsPanel.add(speedLabel);
+        controlsPanel.add(speedCombo);
         controlsPanel.add(exitBtn);
 
         bottomPanel.add(controlsPanel, BorderLayout.SOUTH);
@@ -119,6 +125,11 @@ public class SimulationView extends JPanel {
 
         ganttChartPanel.addTick(processId == null ? "IDLE" : processId, tick, color);
         timeLabel.setText(String.format("Time: %02d:%02d", (tick+1) / 60, (tick+1) % 60));
+
+        SwingUtilities.invokeLater(() -> {
+            JScrollBar horizontal = ganttScrollPane.getHorizontalScrollBar();
+            horizontal.setValue(horizontal.getMaximum());
+        });
     }
 
     public void updateProcessStats(ProcessModel p) {
@@ -148,6 +159,11 @@ public class SimulationView extends JPanel {
 
         List<GanttBlock> blocks = new ArrayList<>();
         int totalTime = 0;
+        final int PIXELS_PER_TICK = 40, BAR_HEIGHT = 50;
+
+        public GanttChartPanel() {
+            setPreferredSize(new Dimension(800, 100));
+        }
 
         public void addTick(String processId, int tick, Color color) {
             if (blocks.isEmpty()) {
@@ -156,70 +172,71 @@ public class SimulationView extends JPanel {
                 GanttBlock last = blocks.get(blocks.size() - 1);
                 if (last.processId.equals(processId) && last.endTick == tick) {
                     last.endTick = tick + 1;
-                } else {
-                    blocks.add(new GanttBlock(processId, tick, tick + 1, color));
-                }
+                } else blocks.add(new GanttBlock(processId, tick, tick + 1, color));
             }
             totalTime = tick + 1;
+
+            int newWidth = Math.max(800, (totalTime * PIXELS_PER_TICK) + 50);
+            setPreferredSize(new Dimension(newWidth, 100));
+            revalidate();
             repaint();
         }
 
         public void reset() {
             blocks.clear();
             totalTime = 0;
+            setPreferredSize(new Dimension(800, 100));
+            revalidate();
             repaint();
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (blocks.isEmpty() || totalTime == 0) return;
+            if (blocks.isEmpty()) return;
 
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            int width = getWidth();
-            int height = getHeight() - 35;
-            int y = 5;
+            int y = 20;
 
-            g2.setFont(new Font("SansSerif", Font.BOLD, 24));
+            g2.setFont(new Font("SansSerif", Font.BOLD, 20));
             FontMetrics fm = g2.getFontMetrics();
 
-            for (int i = 0; i < blocks.size(); i++) {
-                GanttBlock b = blocks.get(i);
-                int x = (int) ((double) b.startTick / totalTime * width);
-                int w = (int) ((double) (b.endTick - b.startTick) / totalTime * width);
-                if (i == blocks.size() - 1) w = width - x;
+            for (GanttBlock b : blocks) {
+                int x = b.startTick * PIXELS_PER_TICK;
+                int w = (b.endTick - b.startTick) * PIXELS_PER_TICK;
 
                 g2.setColor(b.color);
-                g2.fillRect(x, y, w, height);
+                g2.fillRect(x, y, w, BAR_HEIGHT);
 
                 g2.setColor(ThemeManager.isDarkTheme ? Color.WHITE : Color.BLACK);
                 g2.setStroke(new BasicStroke(2));
-                g2.drawRect(x, y, w, height);
+                g2.drawRect(x, y, w, BAR_HEIGHT);
 
                 String text = b.processId.equals("IDLE") ? "-" : b.processId;
                 g2.setColor(b.processId.equals("IDLE") ? (ThemeManager.isDarkTheme ? Color.WHITE : Color.BLACK) : Color.WHITE);
-                int tx = x + (w - fm.stringWidth(text)) / 2;
-                int ty = y + ((height - fm.getHeight()) / 2) + fm.getAscent();
 
-                if (w > fm.stringWidth(text) + 10) {
+                if (w > fm.stringWidth(text) + 5) {
+                    int tx = x + (w - fm.stringWidth(text)) / 2;
+                    int ty = y + ((BAR_HEIGHT - fm.getHeight()) / 2) + fm.getAscent();
                     g2.drawString(text, tx, ty);
                 }
 
                 g2.setColor(ThemeManager.isDarkTheme ? Color.LIGHT_GRAY : Color.DARK_GRAY);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 18));
-
+                g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
                 String startStr = String.valueOf(b.startTick);
-                g2.drawString(startStr, x, y + height + 25);
+                g2.drawString(startStr, x, y + BAR_HEIGHT + 15);
 
-                if (i == blocks.size() - 1) {
-                    String endStr = String.valueOf(b.endTick);
-                    int ex = x + w - g2.getFontMetrics().stringWidth(endStr);
-                    g2.drawString(endStr, ex, y + height + 25);
-                }
+                g2.setFont(new Font("SansSerif", Font.BOLD, 20));
+            }
 
-                g2.setFont(new Font("SansSerif", Font.BOLD, 24));
+            if (totalTime > 0) {
+                g2.setColor(ThemeManager.isDarkTheme ? Color.LIGHT_GRAY : Color.DARK_GRAY);
+                g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                String endStr = String.valueOf(totalTime);
+                int ex = (totalTime * PIXELS_PER_TICK);
+                g2.drawString(endStr, ex, y + BAR_HEIGHT + 15);
             }
         }
     }
@@ -228,5 +245,5 @@ public class SimulationView extends JPanel {
     public JButton getRestartBtn() { return restartBtn; }
     public JButton getTogglePauseBtn() { return togglePauseBtn; }
     public JButton getExitBtn() { return exitBtn; }
-    public JComboBox<String> getSpeedCombo() { return speedCombo; } // ADDED Getter
+    public JComboBox<String> getSpeedCombo() { return speedCombo; }
 }

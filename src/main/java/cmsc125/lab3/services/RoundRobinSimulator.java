@@ -26,44 +26,43 @@ public class RoundRobinSimulator extends BaseSimulator {
 
     @Override
     public boolean executeStep() {
-        if (arrivalQueue.isEmpty() && fifoQueue.isEmpty() && currentRunningProcess == null) {
-            return false;
-        }
+        if (arrivalQueue.isEmpty() && fifoQueue.isEmpty() && currentRunningProcess == null) return false;
 
-        // 1. ARRIVALS FIRST: Move from arrival pool to FIFO queue
+        // Check Arrivals: Add all processes arriving at 'currentTime' to the Queue
         while (!arrivalQueue.isEmpty() && arrivalQueue.peek().getArrivalTime() <= currentTime) {
             ProcessModel arrived = arrivalQueue.poll();
             fifoQueue.add(arrived);
         }
 
-        // 2. PREEMPTION SECOND: Add back to the END of the LinkedList
-        if (currentRunningProcess != null && quantumCounter >= quantum) {
-            fifoQueue.add(currentRunningProcess); // In a LinkedList, this is always the back
-            currentRunningProcess = null;
-            quantumCounter = 0;
+        // Check Quantum / Completion
+        if (currentRunningProcess != null) {
+            if (quantumCounter >= quantum) {
+                fifoQueue.add(currentRunningProcess);
+                currentRunningProcess = null;
+                quantumCounter = 0;
+            }
         }
 
-        // 3. SELECTION: Pull from the HEAD of the LinkedList
+        // Context Switch: Load next process if CPU free
         if (currentRunningProcess == null && !fifoQueue.isEmpty()) {
             currentRunningProcess = fifoQueue.poll();
             quantumCounter = 0;
         }
 
-        // 4. EXECUTION (Standard Logic)
+        // Execution
         if (currentRunningProcess != null) {
             this.activeProcessId = currentRunningProcess.getProcessId();
             currentRunningProcess.setRemainingTime(currentRunningProcess.getRemainingTime() - 1);
             quantumCounter++;
 
+            // Check if finished
             if (currentRunningProcess.getRemainingTime() <= 0) {
                 currentRunningProcess.setCompletionTime(currentTime + 1);
-                calculateStats(currentRunningProcess); //
-                currentRunningProcess = null;
+                calculateStats(currentRunningProcess);
+                currentRunningProcess = null; // CPU free for next tick
                 quantumCounter = 0;
             }
-        } else {
-            this.activeProcessId = "IDLE";
-        }
+        } else this.activeProcessId = "IDLE";
 
         currentTime++;
         return true;

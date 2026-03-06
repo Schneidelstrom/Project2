@@ -28,7 +28,6 @@ public class SimulatorSetupView extends JPanel {
         JPanel topContainer = new JPanel();
         topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
 
-        // Row 1: Back, Generation, Algorithm
         JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         backBtn = new JButton("← Back");
         backBtn.setFont(btnFont);
@@ -37,39 +36,32 @@ public class SimulatorSetupView extends JPanel {
         generationMethodCombo.setFont(comboFont);
 
         algorithmCombo = new JComboBox<>(new String[]{
-            "First Come First Serve", "Round Robin", "Shortest Job First (Preemptive)",
-            "Shortest Job First (Non-preemptive)", "Priority (Preemptive)", "Priority (Non-preemptive)"
+                "First Come First Serve", "Round Robin", "Shortest Job First (Preemptive)",
+                "Shortest Job First (Non-preemptive)", "Priority (Preemptive)", "Priority (Non-preemptive)"
         });
         algorithmCombo.setFont(comboFont);
 
-        JLabel genLabel = new JLabel("Data Source:");
-        genLabel.setFont(labelFont);
-        JLabel algoLabel = new JLabel("Algorithm:");
-        algoLabel.setFont(labelFont);
-
         row1.add(backBtn);
-        row1.add(Box.createHorizontalStrut(20));
-        row1.add(genLabel);
+        row1.add(new JLabel("Method:"));
         row1.add(generationMethodCombo);
-        row1.add(Box.createHorizontalStrut(20));
-        row1.add(algoLabel);
+        row1.add(new JLabel("Algorithm:"));
         row1.add(algorithmCombo);
 
-        // Row 2: Dynamic Options & Specific Action Buttons
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         dynamicOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
 
         quantumSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
         quantumSpinner.setFont(comboFont);
+
         priorityOrderCombo = new JComboBox<>(new String[]{"Lower Number = High Priority", "Higher Number = High Priority"});
         priorityOrderCombo.setFont(comboFont);
 
-        randomizeBtn = new JButton("🎲 Randomize Data");
+        randomizeBtn = new JButton("Randomize Data");
         randomizeBtn.setFont(btnFont);
 
-        loadFileBtn = new JButton("📁 Load File");
+        loadFileBtn = new JButton("Load File");
         loadFileBtn.setFont(btnFont);
-        loadFileBtn.setVisible(false); // Hidden by default (User input is default)
+        loadFileBtn.setVisible(false);
 
         row2.add(dynamicOptionsPanel);
         row2.add(randomizeBtn);
@@ -79,41 +71,29 @@ public class SimulatorSetupView extends JPanel {
         topContainer.add(row2);
         add(topContainer, BorderLayout.NORTH);
 
-        // --- CENTER CONTAINER (Table) ---
-        String[] columns = {"Process ID", "Burst Time (1-30)", "Arrival Time (0-30)", "Priority Number (1-20)"};
+        String[] columns = {"Process ID", "Burst Time (1-30)", "Arrival Time (0-30)", "Priority (1-20)"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // Index 0 is "User-defined input", so it is editable. Index 1 is File mode (Read-only).
                 return generationMethodCombo.getSelectedIndex() == 0;
             }
         };
         processTable = new JTable(tableModel);
-        processTable.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        processTable.setRowHeight(35);
-        processTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 18));
+        processTable.setRowHeight(30);
         add(new JScrollPane(processTable), BorderLayout.CENTER);
 
-        // --- BOTTOM CONTAINER (Actions) ---
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 15));
         addRowBtn = new JButton("+ Add Process");
-        addRowBtn.setFont(btnFont);
-
         removeRowBtn = new JButton("- Remove Process");
-        removeRowBtn.setFont(btnFont);
-
         proceedBtn = new JButton("Proceed to Simulation");
         proceedBtn.setFont(new Font("SansSerif", Font.BOLD, 20));
-        proceedBtn.setPreferredSize(new Dimension(250, 50));
 
         bottomPanel.add(addRowBtn);
         bottomPanel.add(removeRowBtn);
         bottomPanel.add(proceedBtn);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Initialize Default Table Rows
-        for(int i=1; i<=3; i++) tableModel.addRow(new Object[]{"P"+i, "", "", ""});
-
+        for (int i = 1; i <= 3; i++) tableModel.addRow(new Object[]{"P" + i, "", "", ""});
         setupListeners();
     }
 
@@ -121,33 +101,30 @@ public class SimulatorSetupView extends JPanel {
         algorithmCombo.addActionListener(e -> {
             dynamicOptionsPanel.removeAll();
             String algo = (String) algorithmCombo.getSelectedItem();
+
             if (algo.equals("Round Robin")) {
-                JLabel qLabel = new JLabel("Quantum (1-10):");
-                qLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-                dynamicOptionsPanel.add(qLabel);
+                dynamicOptionsPanel.add(new JLabel("Quantum (1-10):"));
                 dynamicOptionsPanel.add(quantumSpinner);
             } else if (algo.contains("Priority")) {
-                JLabel pLabel = new JLabel("Priority Rule:");
-                pLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-                dynamicOptionsPanel.add(pLabel);
+                dynamicOptionsPanel.add(new JLabel("Rule:"));
                 dynamicOptionsPanel.add(priorityOrderCombo);
             }
+
             dynamicOptionsPanel.revalidate();
             dynamicOptionsPanel.repaint();
         });
 
         generationMethodCombo.addActionListener(e -> {
             int idx = generationMethodCombo.getSelectedIndex();
-            tableModel.setRowCount(0); // Clear table
+            tableModel.setRowCount(0);
 
-            if (idx == 0) { // User Input Mode
+            if (idx == 0) { // User Input
                 addRowBtn.setVisible(true);
                 removeRowBtn.setVisible(true);
                 randomizeBtn.setVisible(true);
                 loadFileBtn.setVisible(false);
-                // Pre-fill 3 blank rows
                 for(int i=1; i<=3; i++) tableModel.addRow(new Object[]{"P"+i, "", "", ""});
-            } else { // File Input Mode
+            } else {
                 addRowBtn.setVisible(false);
                 removeRowBtn.setVisible(false);
                 randomizeBtn.setVisible(false);
@@ -156,9 +133,8 @@ public class SimulatorSetupView extends JPanel {
         });
 
         addRowBtn.addActionListener(e -> {
-            if (tableModel.getRowCount() < 20) {
-                tableModel.addRow(new Object[]{"P" + (tableModel.getRowCount() + 1), "", "", ""});
-            } else JOptionPane.showMessageDialog(this, "Maximum of 20 processes allowed.");
+            if (tableModel.getRowCount() < 20) tableModel.addRow(new Object[]{"P" + (tableModel.getRowCount() + 1), "", "", ""});
+            else JOptionPane.showMessageDialog(this, "Max 20 processes.");
         });
     }
 

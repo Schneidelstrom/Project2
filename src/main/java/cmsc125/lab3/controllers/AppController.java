@@ -38,7 +38,6 @@ public class AppController {
         mainFrame.getDashboardView().getPlayButton().addActionListener(e -> mainFrame.showSetup());
         mainFrame.getDashboardView().getSettingsButton().addActionListener(e -> mainFrame.showSettings());
         mainFrame.getDashboardView().getExitButton().addActionListener(e -> confirmAndExit());
-
         mainFrame.getSettingsView().getBackBtn().addActionListener(e -> mainFrame.showDashboard());
 
         setupSettingsListeners();
@@ -116,6 +115,7 @@ public class AppController {
 
         setup.getBackBtn().addActionListener(e -> mainFrame.showDashboard());
 
+        // Remove Row
         setup.getRemoveRowBtn().addActionListener(e -> {
             DefaultTableModel model = setup.getTableModel();
             int selectedRow = setup.getProcessTable().getSelectedRow();
@@ -129,10 +129,9 @@ public class AppController {
             else model.removeRow(model.getRowCount() - 1);
         });
 
+        // Randomize entries
         setup.getRandomizeBtn().addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(mainFrame,
-                "Are you sure you want to randomize? This will overwrite the current table data.",
-                "Confirm Randomize", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(mainFrame, "Are you sure you want to randomize? This will overwrite the current table data.", "Confirm Randomize", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 List<ProcessModel> randProcs = GenerateRandomProcesses.generateRandom();
@@ -145,6 +144,7 @@ public class AppController {
             }
         });
 
+        // Proceed processing
         setup.getProceedBtn().addActionListener(e -> {
             if (generateAndValidateData()) {
                 mainFrame.showSimulation();
@@ -152,6 +152,7 @@ public class AppController {
             }
         });
 
+        // Load file
         setup.getLoadFileBtn().addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
@@ -160,6 +161,7 @@ public class AppController {
             }
         });
 
+        // Simulation controls
         simView.getNewBatchBtn().addActionListener(e -> {
             stopSimulationTimer();
             mainFrame.showSetup();
@@ -175,7 +177,7 @@ public class AppController {
             if (simulationTimer != null) {
                 if (simulationTimer.isRunning()) {
                     simulationTimer.stop();
-                    simView.getTogglePauseBtn().setText("Play");
+                    simView.getTogglePauseBtn().setText("Resume");
                 } else {
                     simulationTimer.start();
                     simView.getTogglePauseBtn().setText("Pause");
@@ -183,12 +185,8 @@ public class AppController {
             }
         });
 
-        // NEW: Live Speed update via JComboBox
         simView.getSpeedCombo().addActionListener(e -> {
-            if (simulationTimer != null) {
-                int newDelay = calculateDelayFromCombo();
-                simulationTimer.setDelay(newDelay);
-            }
+            if (simulationTimer != null) simulationTimer.setDelay(calculateDelayFromCombo());
         });
 
         simView.getExitBtn().addActionListener(e -> {
@@ -201,6 +199,7 @@ public class AppController {
         if (simulationTimer != null && simulationTimer.isRunning()) simulationTimer.stop();
     }
 
+    // Reset process for restart
     private void resetCurrentProcesses() {
         for (ProcessModel p : currentProcesses) {
             p.setRemainingTime(p.getBurstTime());
@@ -210,7 +209,7 @@ public class AppController {
         }
     }
 
-    // Calculates delay based on string "1.5x", "5.0x", etc.
+    // Calculate delay
     private int calculateDelayFromCombo() {
         String selected = (String) mainFrame.getSimulationView().getSpeedCombo().getSelectedItem();
         double multiplier = Double.parseDouble(selected.replace("x", ""));
@@ -245,24 +244,8 @@ public class AppController {
 
         simView.getTogglePauseBtn().setText("Pause");
 
-        // Start timer using whatever speed multiplier is currently selected
-        int initialDelay = calculateDelayFromCombo();
-
-        simulationTimer = new Timer(initialDelay, e -> {
-            boolean hasMore = currentSimulator.executeStep();
-
-            if (!hasMore) {
-                simulationTimer.stop();
-                double totalWt = 0;
-                double totalTat = 0;
-                for (ProcessModel p : currentProcesses) {
-                    totalWt += p.getWaitingTime();
-                    totalTat += p.getTurnaroundTime();
-                }
-                simView.updateAverages(totalWt / currentProcesses.size(), totalTat / currentProcesses.size());
-                JOptionPane.showMessageDialog(mainFrame, "Simulation Complete!");
-                return;
-            }
+        simulationTimer = new Timer(calculateDelayFromCombo(), e -> {
+            boolean hasMoreSteps = currentSimulator.executeStep();
 
             simView.addGanttBlock(currentSimulator.getActiveProcessId(), currentSimulator.getCurrentTime() - 1);
 
@@ -273,8 +256,25 @@ public class AppController {
                     }
                 }
             }
+
+            if (!hasMoreSteps) {
+                simulationTimer.stop();
+                simView.getTogglePauseBtn().setText("Finished");
+                calculateAndDisplayAverages();
+                JOptionPane.showMessageDialog(mainFrame, "Simulation Complete!");
+            }
         });
         simulationTimer.start();
+    }
+
+    private void calculateAndDisplayAverages() {
+        double totalWt = 0;
+        double totalTat = 0;
+        for (ProcessModel p : currentProcesses) {
+            totalWt += p.getWaitingTime();
+            totalTat += p.getTurnaroundTime();
+        }
+        mainFrame.getSimulationView().updateAverages(totalWt / currentProcesses.size(), totalTat / currentProcesses.size());
     }
 
     private boolean generateAndValidateData() {
@@ -297,9 +297,7 @@ public class AppController {
                 String arrivalStr = model.getValueAt(i, 2).toString().trim();
                 String priorityStr = model.getValueAt(i, 3).toString().trim();
 
-                if (burstStr.isEmpty() || arrivalStr.isEmpty() || priorityStr.isEmpty()) {
-                    throw new Exception("Fields cannot be left blank.");
-                }
+                if (burstStr.isEmpty() || arrivalStr.isEmpty() || priorityStr.isEmpty()) throw new Exception("Fields cannot be left blank.");
 
                 int burst = Integer.parseInt(burstStr);
                 int arrival = Integer.parseInt(arrivalStr);
@@ -308,6 +306,7 @@ public class AppController {
                 if (burst < 1 || burst > 30) throw new Exception("Burst time must be 1-30.");
                 if (arrival < 0 || arrival > 30) throw new Exception("Arrival time must be 0-30.");
                 if (priority < 1 || priority > 20) throw new Exception("Priority must be 1-20.");
+
                 if (!priorities.add(priority)) throw new Exception("Priority duplicate found: " + priority);
 
                 currentProcesses.add(new ProcessModel(id, burst, arrival, priority));

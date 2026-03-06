@@ -2,6 +2,7 @@ package cmsc125.lab3.views;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 import java.net.URL;
 
 public class HelpView extends JPanel {
@@ -53,8 +54,15 @@ public class HelpView extends JPanel {
                 "<b>Developers:</b><br>" +
                         "• ali1x3<br>" +
                         "• ddrhckrzz<br>" +
-                        "• Schneidelstrom<br><br>" +
-                        "<i>Copyright © 2026. Created solely for educational purposes for CMSC 125.</i>", true
+                        "• Schneidelstrom<br>", true
+        ));
+
+        contentPanel.add(Box.createVerticalStrut(10));
+        contentPanel.add(createHyperlink("View GitHub Source Code", "https://github.com/Schneidelstrom/Project2"));
+        contentPanel.add(Box.createVerticalStrut(20));
+
+        contentPanel.add(createBodyText(
+                "<i>Copyright © 2026. Created solely for educational purposes for CMSC 125.</i>", true
         ));
         contentPanel.add(Box.createVerticalStrut(20));
 
@@ -113,12 +121,28 @@ public class HelpView extends JPanel {
                 int height = (width * icon.getIconHeight()) / icon.getIconWidth();
                 Image scaledImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
                 label.setIcon(new ImageIcon(scaledImg));
-            } else {
-                label.setText("<html><div style='width: 700px; height: 100px; background-color: #555; color: white; text-align: center; line-height: 100px; border: 1px solid gray; font-family: SansSerif;'>" + fallbackText + "</div></html>");
-            }
+            } else label.setText("<html><div style='width: 700px; height: 100px; background-color: #555; color: white; text-align: center; line-height: 100px; border: 1px solid gray; font-family: SansSerif;'>" + fallbackText + "</div></html>");
         } catch (Exception e) {
             label.setText("Image missing: " + imagePath);
         }
+        return label;
+    }
+
+    private JLabel createHyperlink(String text, String url) {
+        JLabel label = new JLabel("<html><a href='" + url + "'>" + text + "</a></html>");
+        label.setFont(new Font("SansSerif", Font.BOLD, 18));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        label.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI(url));
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Could not open link: " + ex.getMessage());
+                }
+            }
+        });
         return label;
     }
 

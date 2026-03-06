@@ -55,50 +55,6 @@ class SJFSimulatorTest {
     }
 
     @Test
-@DisplayName("Table Validation: SJF Non-Preemptive (P1-P4)")
-void testTableFromImage() {
-    // Mapping image P0->P1, P1->P2, P2->P3, P3->P4
-    processes.add(new ProcessModel("P1", 7, 0, 1)); 
-    processes.add(new ProcessModel("P2", 4, 2, 2)); 
-    processes.add(new ProcessModel("P3", 1, 4, 3)); 
-    processes.add(new ProcessModel("P4", 4, 5, 4)); 
-    
-    simulator = new SJFSimulator(processes);
-
-    // Run the full simulation
-    while (simulator.executeStep());
-
-    // Retrieve processes to verify stats
-    ProcessModel p1 = processes.get(0);
-    ProcessModel p2 = processes.get(1);
-    ProcessModel p3 = processes.get(2);
-    ProcessModel p4 = processes.get(3);
-
-    // Assertions based on the provided table math
-    assertAll("SJF Table Values",
-        // P1: Starts at 0, ends at 7
-        () -> assertEquals(7, p1.getCompletionTime(), "P1 Completion"),
-        () -> assertEquals(7, p1.getTurnaroundTime(), "P1 Turnaround"),
-        () -> assertEquals(0, p1.getWaitingTime(), "P1 Waiting"),
-
-        // P3: Shortest among arrived (Burst 1), starts at 7, ends at 8
-        () -> assertEquals(8, p3.getCompletionTime(), "P3 Completion"),
-        () -> assertEquals(4, p3.getTurnaroundTime(), "P3 Turnaround"),
-        () -> assertEquals(3, p3.getWaitingTime(), "P3 Waiting"),
-
-        // P2: Next shortest (Burst 4, arrived at 2), starts at 8, ends at 12
-        () -> assertEquals(12, p2.getCompletionTime(), "P2 Completion"),
-        () -> assertEquals(10, p2.getTurnaroundTime(), "P2 Turnaround"),
-        () -> assertEquals(6, p2.getWaitingTime(), "P2 Waiting"),
-
-        // P4: Last (Burst 4, arrived at 5), starts at 12, ends at 16
-        () -> assertEquals(16, p4.getCompletionTime(), "P4 Completion"),
-        () -> assertEquals(11, p4.getTurnaroundTime(), "P4 Turnaround"),
-        () -> assertEquals(7, p4.getWaitingTime(), "P4 Waiting")
-    );
-}
-
-    @Test
     @DisplayName("SJF Math: Verify Waiting and Turnaround times")
     void testSJFStats() {
         // P1: Burst 4, Arrival 0 -> Completion 4

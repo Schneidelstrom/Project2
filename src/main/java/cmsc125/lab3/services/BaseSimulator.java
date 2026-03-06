@@ -10,7 +10,7 @@ import cmsc125.lab3.models.ProcessModel;
  * Simulator
  * this serves as the parent template for all the scheduling algorithms
  */
-public abstract class NonPreemptiveSimulator {
+public abstract class BaseSimulator {
     List<ProcessModel> processes;
     PriorityQueue<ProcessModel> arrivalQueue;
     PriorityQueue<ProcessModel> processQueue;
@@ -21,7 +21,7 @@ public abstract class NonPreemptiveSimulator {
     String activeProcessId;
 
 
-	public NonPreemptiveSimulator (List<ProcessModel> startingProcesses, Comparator<ProcessModel> comparator) {
+	public BaseSimulator (List<ProcessModel> startingProcesses, Comparator<ProcessModel> comparator) {
         processes = startingProcesses;
         currentTime = 0;
         completedProcesses = 0;
@@ -31,7 +31,6 @@ public abstract class NonPreemptiveSimulator {
         );
         arrivalQueue.addAll(startingProcesses);
         processQueue = new PriorityQueue<>(comparator);
-        currentRunningProcess = null;
     }
 
     public boolean executeStep() {
@@ -71,7 +70,7 @@ public abstract class NonPreemptiveSimulator {
         return true;
     }
 
-    private void calculateStats(ProcessModel p) {
+    public void calculateStats(ProcessModel p) {
         p.setTurnaroundTime(p.getCompletionTime() - p.getArrivalTime());
         p.setWaitingTime(p.getTurnaroundTime() - p.getBurstTime());
     }

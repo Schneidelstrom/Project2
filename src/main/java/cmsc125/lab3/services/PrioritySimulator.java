@@ -9,7 +9,7 @@ import cmsc125.lab3.models.ProcessModel;
  * FCFSSimulator
  * This simulates the first come first served cpu scheduling algorithm
  */
-public class PrioritySimulator extends NonPreemptiveSimulator {
+public class PrioritySimulator extends BaseSimulator {
 
     public PrioritySimulator(List<ProcessModel> startingProcesses) {
         super(startingProcesses, (p1, p2) -> {
@@ -31,5 +31,4 @@ public class PrioritySimulator extends NonPreemptiveSimulator {
             // This is why P2 was losing to P3 in your test!
             return p1.getProcessId().compareTo(p2.getProcessId());
         });
-    }
-}
+    }}

@@ -2,6 +2,7 @@ package cmsc125.lab3.models;
 
 public class ProcessModel {
 
+    private static int idCounter = 1;
     private String processId;
 	private int burstTime;
     private int arrivalTime;
@@ -13,8 +14,18 @@ public class ProcessModel {
 	private int turnaroundTime;
 	private int remainingTime; // Vital for Preemptive algorithms & Round Robin
 
-    public ProcessModel(String id, int burst, int arrival, int priority) {
-        this.processId = id;
+    public ProcessModel(int burst, int arrival, int priority) {
+        this.processId = "P" + idCounter;
+        this.burstTime = burst;
+        this.arrivalTime = arrival;
+        this.priority = priority;
+        this.remainingTime = burst;
+        idCounter++;
+    }
+
+    //only use this for testing
+    public ProcessModel(String processId, int burst, int arrival, int priority) {
+        this.processId = processId;
         this.burstTime = burst;
         this.arrivalTime = arrival;
         this.priority = priority;

@@ -26,7 +26,6 @@ public class GenerateRandomProcesses {
 
         for (int i = 0; i < count; i++) {
             list.add(new ProcessModel(
-                "P" + (i + 1),
                 rand.nextInt(30) + 1, // Burst 1-30
                 rand.nextInt(31),     // Arrival 0-30
                 priorities.get(i)     // Unique priority 1-20

@@ -19,12 +19,9 @@ public class SimulatorSetupView extends JPanel {
     public SimulatorSetupView() {
         setLayout(new BorderLayout(15, 15));
 
-        // --- Fonts for scaling up UI ---
-        Font labelFont = new Font("SansSerif", Font.BOLD, 18);
         Font comboFont = new Font("SansSerif", Font.PLAIN, 18);
         Font btnFont = new Font("SansSerif", Font.BOLD, 16);
 
-        // --- TOP CONTAINER ---
         JPanel topContainer = new JPanel();
         topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
 
@@ -75,7 +72,7 @@ public class SimulatorSetupView extends JPanel {
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return generationMethodCombo.getSelectedIndex() == 0;
+                return generationMethodCombo.getSelectedIndex() == 0 && column != 0;
             }
         };
         processTable = new JTable(tableModel);
@@ -130,11 +127,6 @@ public class SimulatorSetupView extends JPanel {
                 randomizeBtn.setVisible(false);
                 loadFileBtn.setVisible(true);
             }
-        });
-
-        addRowBtn.addActionListener(e -> {
-            if (tableModel.getRowCount() < 20) tableModel.addRow(new Object[]{"P" + (tableModel.getRowCount() + 1), "", "", ""});
-            else JOptionPane.showMessageDialog(this, "Max 20 processes.");
         });
     }
 

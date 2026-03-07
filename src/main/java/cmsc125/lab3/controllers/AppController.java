@@ -141,18 +141,38 @@ public class AppController {
 
         setup.getBackBtn().addActionListener(e -> mainFrame.showDashboard());
 
-        // Remove Row
         setup.getRemoveRowBtn().addActionListener(e -> {
             DefaultTableModel model = setup.getTableModel();
-            int selectedRow = setup.getProcessTable().getSelectedRow();
+            JTable table = setup.getProcessTable();
+            int[] selectedRows = table.getSelectedRows();
 
-            if (model.getRowCount() <= 3) {
+            int rowsToDelete = (selectedRows.length > 0) ? selectedRows.length : 1;
+            int remainingRows = model.getRowCount() - rowsToDelete;
+
+            if (remainingRows < 3) {
                 JOptionPane.showMessageDialog(mainFrame, "A minimum of 3 processes is required.");
                 return;
             }
 
-            if (selectedRow != -1) model.removeRow(selectedRow);
-            else model.removeRow(model.getRowCount() - 1);
+            if (selectedRows.length > 0) {
+                for (int i = selectedRows.length - 1; i >= 0; i--) {
+                    model.removeRow(selectedRows[i]);
+                }
+            } else {
+                model.removeRow(model.getRowCount() - 1);
+            }
+
+            renumberProcessIDs(model);
+        });
+
+        setup.getAddRowBtn().addActionListener(e -> {
+            DefaultTableModel model = setup.getTableModel();
+            if (model.getRowCount() < 20) {
+                model.addRow(new Object[]{"", "", "", ""});
+                renumberProcessIDs(model);
+            } else {
+                JOptionPane.showMessageDialog(mainFrame, "Maximum of 20 processes allowed.");
+            }
         });
 
         // Randomize entries
@@ -167,6 +187,7 @@ public class AppController {
 
                 for (int i = 0; i < currentRowCount; i++) {
                     ProcessModel p = randProcs.get(i);
+                    model.setValueAt("P" + (i + 1), i, 0);
                     model.setValueAt(p.getBurstTime(), i, 1);
                     model.setValueAt(p.getArrivalTime(), i, 2);
                     model.setValueAt(p.getPriority(), i, 3);
@@ -347,6 +368,13 @@ public class AppController {
         }
 
         return true;
+    }
+
+    // To remember process IDs
+    private void renumberProcessIDs(DefaultTableModel model) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            model.setValueAt("P" + (i + 1), i, 0);
+        }
     }
 
     private void loadProcessesFromFile(File file) {

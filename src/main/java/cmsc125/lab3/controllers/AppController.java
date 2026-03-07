@@ -64,6 +64,30 @@ public class AppController {
     private void setupSettingsListeners() {
         SettingsView settings = mainFrame.getSettingsView();
 
+        settings.getBgmToggleBtn().addActionListener(e -> {
+            boolean newState = !settingsModel.isBgmEnabled();
+            settingsModel.setBgmEnabled(newState);
+            updateToggleButton(settings.getBgmToggleBtn(), newState);
+
+            audioService.updateBgmVolume(settingsModel.getBgmVolume(), newState);
+        });
+
+        settings.getBgmSlider().addChangeListener(e -> {
+            int val = settings.getBgmSlider().getValue();
+            settingsModel.setBgmVolume(val);
+            settings.getBgmSpinner().setValue(val);
+
+            audioService.updateBgmVolume(val, settingsModel.isBgmEnabled());
+        });
+
+        settings.getBgmSpinner().addChangeListener(e -> {
+            int val = (Integer) settings.getBgmSpinner().getValue();
+            settingsModel.setBgmVolume(val);
+            settings.getBgmSlider().setValue(val);
+
+            audioService.updateBgmVolume(val, settingsModel.isBgmEnabled());
+        });
+
         settings.getSfxToggleBtn().addActionListener(e -> {
             boolean newState = !settingsModel.isSfxEnabled();
             settingsModel.setSfxEnabled(newState);
@@ -352,6 +376,8 @@ public class AppController {
 
     private void confirmAndExit() {
         if (JOptionPane.showConfirmDialog(mainFrame, "Exit ChronOS?", "Exit", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            settingsModel.saveSettings();
+            audioService.stopBGM();
             System.exit(0);
         }
     }
@@ -364,7 +390,11 @@ public class AppController {
     }
 
     public void startApplication() {
-        Timer transitionTimer = new Timer(3000, e -> mainFrame.showDashboard());
+        audioService.playSFX("/audio/opening.wav", settingsModel.getSfxVolume(), settingsModel.isSfxEnabled());
+        Timer transitionTimer = new Timer(3000, e -> {
+            mainFrame.showDashboard();
+            audioService.playBGM("/audio/bgm.wav", settingsModel.getBgmVolume(), settingsModel.isBgmEnabled());
+        });
         transitionTimer.setRepeats(false);
         transitionTimer.start();
     }

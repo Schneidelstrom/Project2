@@ -41,10 +41,66 @@ public class AudioService {
         }
     }
 
+    public void playBGM(String filePath, int volumeLevel, boolean isEnabled) {
+        try {
+            // Stop existing BGM
+            if (currentBgmClip != null && currentBgmClip.isOpen()) {
+                currentBgmClip.stop();
+                currentBgmClip.close();
+            }
+
+            // Load file
+            URL audioURL = getClass().getResource(filePath);
+            if (audioURL == null) {
+                System.err.println("Warning: Could not find BGM file at " + filePath);
+                return;
+            }
+
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioURL);
+            currentBgmClip = AudioSystem.getClip();
+            currentBgmClip.open(audioStream);
+
+            // Set volume
+            setClipVolume(currentBgmClip, volumeLevel);
+
+            // Set to Loop
+            currentBgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+
+            // Only start playing if enabled
+            if (isEnabled) currentBgmClip.start();
+
+        } catch (Exception e) {
+            System.err.println("Error playing BGM: " + e.getMessage());
+        }
+    }
+
+    public void updateBgmVolume(int volumeLevel, boolean isEnabled) {
+        if (currentBgmClip == null || !currentBgmClip.isOpen()) return;
+
+        if (isEnabled) {
+            // If it was stopped/paused, start it up again
+            if (!currentBgmClip.isRunning()) {
+                currentBgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+                currentBgmClip.start();
+            }
+
+            setClipVolume(currentBgmClip, volumeLevel); // Update loudness
+        } else {
+            if (currentBgmClip.isRunning()) currentBgmClip.stop();  // If disabled, stop playback
+        }
+    }
+
     public void stopSFX() {
         if (currentSfxClip != null && currentSfxClip.isRunning()) {
             currentSfxClip.stop();
             currentSfxClip.close();
+        }
+    }
+
+    public void stopBGM() {
+        if (currentBgmClip != null && currentBgmClip.isRunning()) {
+            currentBgmClip.stop();
+            currentBgmClip.close();
         }
     }
 

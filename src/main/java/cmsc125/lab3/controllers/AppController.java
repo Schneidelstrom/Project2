@@ -6,15 +6,12 @@ import cmsc125.lab3.services.*;
 import cmsc125.lab3.views.*;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 public class AppController {
     private final MainFrame mainFrame;
@@ -214,8 +211,22 @@ public class AppController {
 
         // Simulation controls
         simView.getNewBatchBtn().addActionListener(e -> {
-            stopSimulationTimer();
-            mainFrame.showSetup();
+            boolean isFinished = simView.getTogglePauseBtn().getText().equals("Finished");
+
+            if (!isFinished) {
+                boolean wasRunning = simulationTimer != null && simulationTimer.isRunning();
+                if (wasRunning) simulationTimer.stop();
+
+                int confirm = JOptionPane.showConfirmDialog(mainFrame, "The simulation is currently running. Are you sure you want to terminate it and go back to Simulation Setup?", "Confirm Termination", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    stopSimulationTimer();
+                    mainFrame.showSetup();
+                } else if (wasRunning) simulationTimer.start();
+            } else {
+                stopSimulationTimer();
+                mainFrame.showSetup();
+            }
         });
 
         simView.getRestartBtn().addActionListener(e -> {
@@ -241,8 +252,22 @@ public class AppController {
         });
 
         simView.getExitBtn().addActionListener(e -> {
-            stopSimulationTimer();
-            mainFrame.showDashboard();
+            boolean isFinished = simView.getTogglePauseBtn().getText().equals("Finished");
+
+            if (!isFinished) {
+                boolean wasRunning = simulationTimer != null && simulationTimer.isRunning();
+                if (wasRunning) simulationTimer.stop();
+
+                int confirm = JOptionPane.showConfirmDialog(mainFrame, "The simulation is currently running. Are you sure you want to terminate it and exit to the Dashboard?", "Confirm Termination", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    stopSimulationTimer();
+                    mainFrame.showDashboard();
+                } else if (wasRunning) simulationTimer.start();
+            } else {
+                stopSimulationTimer();
+                mainFrame.showDashboard();
+            }
         });
     }
 
@@ -276,45 +301,48 @@ public class AppController {
 
         simView.setupSimulation(method, algo, currentProcesses);
 
-        if (algo.equals("First Come First Serve")) {
-            currentSimulator = new FCFSSimulator(currentProcesses);
-        } else if (algo.equals("Round Robin")) {
-            int quantum = (Integer) setup.getQuantumSpinner().getValue();
-            currentSimulator = new RoundRobinSimulator(currentProcesses, quantum);
-        } else if (algo.equals("Shortest Job First (Preemptive)")) {
-            currentSimulator = new SRTSimulator(currentProcesses);
-        } else if (algo.equals("Shortest Job First (Non-preemptive)")) {
-            currentSimulator = new SJFSimulator(currentProcesses);
-        } else if (algo.equals("Priority (Preemptive)")) {
-            boolean isLowerBetter = setup.getPriorityOrderCombo().getSelectedIndex() == 0;
-            currentSimulator = new PreemptivePrioritySimulator(currentProcesses, isLowerBetter);
-        } else if (algo.equals("Priority (Non-preemptive)")) {
-            boolean isLowerBetter = setup.getPriorityOrderCombo().getSelectedIndex() == 0;
-            currentSimulator = new PrioritySimulator(currentProcesses, isLowerBetter);
+        switch (Objects.requireNonNull(algo)) {
+            case "First Come First Serve" -> currentSimulator = new FCFSSimulator(currentProcesses);
+            case "Round Robin" -> {
+                int quantum = (Integer) setup.getQuantumSpinner().getValue();
+                currentSimulator = new RoundRobinSimulator(currentProcesses, quantum);
+            }
+            case "Shortest Job First (Preemptive)" -> currentSimulator = new SRTSimulator(currentProcesses);
+            case "Shortest Job First (Non-preemptive)" -> currentSimulator = new SJFSimulator(currentProcesses);
+            case "Priority (Preemptive)" -> {
+                boolean isLowerBetter = setup.getPriorityOrderCombo().getSelectedIndex() == 0;
+                currentSimulator = new PreemptivePrioritySimulator(currentProcesses, isLowerBetter);
+            }
+            case "Priority (Non-preemptive)" -> {
+                boolean isLowerBetter = setup.getPriorityOrderCombo().getSelectedIndex() == 0;
+                currentSimulator = new PrioritySimulator(currentProcesses, isLowerBetter);
+            }
         }
 
         simView.getTogglePauseBtn().setText("Pause");
+        simView.getTogglePauseBtn().setEnabled(true);
 
         simulationTimer = new Timer(calculateDelayFromCombo(), e -> {
             boolean hasMoreSteps = currentSimulator.executeStep();
+
+            if (!hasMoreSteps) {
+                simulationTimer.stop();
+                simView.getTogglePauseBtn().setText("Finished");
+                simView.getTogglePauseBtn().setEnabled(false);
+                calculateAndDisplayAverages();
+                JOptionPane.showMessageDialog(mainFrame, "Simulation Complete!");
+                return;
+            }
 
             simView.addGanttBlock(currentSimulator.getActiveProcessId(), currentSimulator.getCurrentTime() - 1);
 
             if (currentSimulator.getActiveProcessId() != null && !currentSimulator.getActiveProcessId().equals("IDLE")) {
                 for (ProcessModel p : currentProcesses) {
-                    if (p.getProcessId().equals(currentSimulator.getActiveProcessId()) && p.getRemainingTime() == 0) {
-                        simView.updateProcessStats(p);
-                    }
+                    if (p.getProcessId().equals(currentSimulator.getActiveProcessId()) && p.getRemainingTime() == 0) simView.updateProcessStats(p);
                 }
             }
-
-            if (!hasMoreSteps) {
-                simulationTimer.stop();
-                simView.getTogglePauseBtn().setText("Finished");
-                calculateAndDisplayAverages();
-                JOptionPane.showMessageDialog(mainFrame, "Simulation Complete!");
-            }
         });
+
         simulationTimer.start();
     }
 

@@ -43,3 +43,5 @@ build/
 
 ### random pom stuff ###
 dependency-reduced-pom.xml
+
+settings.properties

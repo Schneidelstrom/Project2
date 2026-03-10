@@ -66,7 +66,7 @@ public class SimulatorSetupView extends JPanel {
             textField.setBackground(UIManager.getColor("Panel.background"));
         }
 
-        JComponent editor = quantumSpinner.getEditor();
+        editor = quantumSpinner.getEditor();
         if (editor instanceof JSpinner.DefaultEditor) ((JSpinner.DefaultEditor) editor).getTextField().setEditable(false);
         priorityOrderCombo = new JComboBox<>(new String[]{"Lower Number = High Priority", "Higher Number = High Priority"});
         priorityOrderCombo.setFont(comboFont);

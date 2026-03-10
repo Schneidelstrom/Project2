@@ -66,6 +66,8 @@ public class SimulatorSetupView extends JPanel {
             textField.setBackground(UIManager.getColor("Panel.background"));
         }
 
+        JComponent editor = quantumSpinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor) ((JSpinner.DefaultEditor) editor).getTextField().setEditable(false);
         priorityOrderCombo = new JComboBox<>(new String[]{"Lower Number = High Priority", "Higher Number = High Priority"});
         priorityOrderCombo.setFont(comboFont);
 
@@ -91,8 +93,17 @@ public class SimulatorSetupView extends JPanel {
                 return generationMethodCombo.getSelectedIndex() == 0 && column != 0;
             }
         };
+
         processTable = new JTable(tableModel);
-        processTable.setRowHeight(30);
+        processTable.setFont(new Font("SansSerif", Font.PLAIN, 20));
+        processTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 20));
+        processTable.setRowHeight(40);
+
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        for (int i = 0; i < processTable.getColumnCount(); i++) {
+            processTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
         add(new JScrollPane(processTable), BorderLayout.CENTER);
         add(Box.createHorizontalStrut(50), BorderLayout.WEST); // 50px left margin
         add(Box.createHorizontalStrut(50), BorderLayout.EAST); // 50px right margin
@@ -137,6 +148,7 @@ public class SimulatorSetupView extends JPanel {
                 dynamicOptionsPanel.add(priorityOrderCombo);
             }
 
+            cmsc125.lab3.services.ThemeManager.applyTheme(dynamicOptionsPanel, cmsc125.lab3.services.ThemeManager.isDarkTheme);
             dynamicOptionsPanel.revalidate();
             dynamicOptionsPanel.repaint();
         });

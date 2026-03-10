@@ -45,9 +45,16 @@ public class SimulationView extends JPanel {
         };
 
         JTable resultTable = new JTable(resultTableModel);
-        resultTable.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        resultTable.setRowHeight(35);
-        resultTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 18));
+        resultTable.setFont(new Font("SansSerif", Font.PLAIN, 22));
+        resultTable.setRowHeight(45);
+        resultTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 22));
+
+        javax.swing.table.DefaultTableCellRenderer resCenterRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        resCenterRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        for (int i = 0; i < resultTable.getColumnCount(); i++) {
+            resultTable.getColumnModel().getColumn(i).setCellRenderer(resCenterRenderer);
+        }
+
         centerPanel.add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
         JPanel avgPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 30, 10));

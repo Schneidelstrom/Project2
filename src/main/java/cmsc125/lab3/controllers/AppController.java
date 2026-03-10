@@ -347,8 +347,11 @@ public class AppController {
 
     private boolean generateAndValidateData() {
         SimulatorSetupView setup = mainFrame.getSetupView();
-        DefaultTableModel model = setup.getTableModel();
 
+        JTable table = setup.getProcessTable();
+        if (table.isEditing()) table.getCellEditor().stopCellEditing();
+
+        DefaultTableModel model = setup.getTableModel();
         int rowCount = model.getRowCount();
         if (rowCount < 3 || rowCount > 20) {
             JOptionPane.showMessageDialog(mainFrame, "Must be between 3 and 20 processes.");

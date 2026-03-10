@@ -13,6 +13,8 @@ public class SimulatorSetupView extends JPanel {
     private final DefaultTableModel tableModel;
     private final JTable processTable;
     private final JButton addRowBtn, removeRowBtn, proceedBtn, loadFileBtn, randomizeBtn, backBtn;
+    private final JLabel quantumLabel;
+    private final JLabel ruleLabel;
 
     private final JPanel dynamicOptionsPanel;
 
@@ -43,6 +45,9 @@ public class SimulatorSetupView extends JPanel {
         row1.add(generationMethodCombo);
         row1.add(new JLabel("Algorithm:"));
         row1.add(algorithmCombo);
+
+        quantumLabel = new JLabel("Quantum (1-10):");
+        ruleLabel = new JLabel("Rule:");
 
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         dynamicOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -100,17 +105,28 @@ public class SimulatorSetupView extends JPanel {
             String algo = (String) algorithmCombo.getSelectedItem();
 
             if (algo.equals("Round Robin")) {
-                dynamicOptionsPanel.add(new JLabel("Quantum (1-10):"));
+                JLabel quantumLabel = new JLabel("Quantum (1-10):");
+
+                // MANUALLY SYNC: Copy the font and color from the Combo Box itself
+                quantumLabel.setFont(algorithmCombo.getFont());
+                quantumLabel.setForeground(algorithmCombo.getForeground());
+
+                dynamicOptionsPanel.add(quantumLabel);
                 dynamicOptionsPanel.add(quantumSpinner);
             } else if (algo.contains("Priority")) {
-                dynamicOptionsPanel.add(new JLabel("Rule:"));
+                JLabel ruleLabel = new JLabel("Rule:");
+
+                // MANUALLY SYNC: Copy the font and color from the Combo Box itself
+                ruleLabel.setFont(algorithmCombo.getFont());
+                ruleLabel.setForeground(algorithmCombo.getForeground());
+
+                dynamicOptionsPanel.add(ruleLabel);
                 dynamicOptionsPanel.add(priorityOrderCombo);
             }
 
             dynamicOptionsPanel.revalidate();
             dynamicOptionsPanel.repaint();
         });
-
         generationMethodCombo.addActionListener(e -> {
             int idx = generationMethodCombo.getSelectedIndex();
             tableModel.setRowCount(0);

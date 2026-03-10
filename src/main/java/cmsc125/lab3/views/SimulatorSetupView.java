@@ -1,6 +1,7 @@
 package cmsc125.lab3.views;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
@@ -107,6 +108,19 @@ public class SimulatorSetupView extends JPanel {
         add(new JScrollPane(processTable), BorderLayout.CENTER);
         add(Box.createHorizontalStrut(50), BorderLayout.WEST); // 50px left margin
         add(Box.createHorizontalStrut(50), BorderLayout.EAST); // 50px right margin
+
+        Font tableFont = new Font("SansSerif", Font.PLAIN, 18);
+        processTable.setFont(tableFont);
+        processTable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 18));
+        processTable.setRowHeight(35); // Adjust height to fit the 18pt font
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        // Loop through all columns and apply the centering
+        for (int i = 0; i < processTable.getColumnCount(); i++) {
+            processTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 15));
         addRowBtn = new JButton("+ Add Process");

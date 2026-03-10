@@ -4,6 +4,7 @@ import cmsc125.lab3.models.ProcessModel;
 import cmsc125.lab3.services.ThemeManager;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class SimulationView extends JPanel {
 
     private final Map<String, Color> processColors = new HashMap<>();
     private final Color[] palette = {
-        Color.RED, Color.BLUE, new Color(0, 150, 0), Color.ORANGE, Color.MAGENTA, Color.CYAN,
+        Color.RED, Color.BLUE, new Color(0, 150, 0), Color.ORANGE, Color.MAGENTA, new Color(34, 139, 34),
         new Color(255, 105, 180), new Color(150, 150, 0), new Color(128, 0, 128), new Color(0, 128, 128)
     };
 
@@ -34,7 +35,7 @@ public class SimulationView extends JPanel {
         add(infoLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        String[] cols = {"Process ID", "Burst Time", "Arrival Time", "Priority", "Waiting Time", "Turnaround Time"};
+        String[] cols = {"Process ID", "Burst Time", "Arrival Time", "Priority", "Waiting Time", "Turnaround Time", "AWT", "ATT"};
 
         // OVERRIDE isCellEditable to make the table read-only
         resultTableModel = new DefaultTableModel(cols, 0) {
@@ -56,6 +57,21 @@ public class SimulationView extends JPanel {
         }
 
         centerPanel.add(new JScrollPane(resultTable), BorderLayout.CENTER);
+        centerPanel.add(Box.createHorizontalStrut(50), BorderLayout.WEST); // 50px left margin
+        centerPanel.add(Box.createHorizontalStrut(50), BorderLayout.EAST); // 50px right margin
+
+        // Inside the SimulationView constructor, after initializing resultTable:
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        // Apply to all columns
+        for (int i = 0; i < resultTable.getColumnCount(); i++) {
+            resultTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        // Ensure the font is consistent
+        resultTable.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        resultTable.setRowHeight(35);
 
         JPanel avgPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 30, 10));
         avgWtLabel = new JLabel("Average Waiting Time: 0.00");
@@ -120,9 +136,19 @@ public class SimulationView extends JPanel {
         processColors.clear();
         ganttChartPanel.reset();
 
+        // int cIdx = 0;
+        // for (ProcessModel p : processes) {
+        //     resultTableModel.addRow(new Object[]{ p.getProcessId(), p.getBurstTime(), p.getArrivalTime(), p.getPriority(), "", "" });
+        //     processColors.put(p.getProcessId(), palette[cIdx % palette.length]);
+        //     cIdx++;
+        // }
+
         int cIdx = 0;
         for (ProcessModel p : processes) {
-            resultTableModel.addRow(new Object[]{ p.getProcessId(), p.getBurstTime(), p.getArrivalTime(), p.getPriority(), "", "" });
+            resultTableModel.addRow(new Object[]{ 
+                p.getProcessId(), p.getBurstTime(), p.getArrivalTime(), p.getPriority(), 
+                "", "", "0.00", "0.00" // New AWT and ATT placeholders
+            });
             processColors.put(p.getProcessId(), palette[cIdx % palette.length]);
             cIdx++;
         }
@@ -156,11 +182,20 @@ public class SimulationView extends JPanel {
         }
     }
 
-    public void updateAverages(double avgWt, double avgTat) {
-        avgWtLabel.setText(String.format("Average Waiting Time: %.2f", avgWt));
-        avgTatLabel.setText(String.format("Average Turnaround Time: %.2f", avgTat));
-    }
+public void updateAverages(double avgWt, double avgTat) {
+    String wtStr = String.format("%.2f", avgWt);
+    String tatStr = String.format("%.2f", avgTat);
 
+    // Update the bottom labels as you already do
+    avgWtLabel.setText("Average Waiting Time: " + wtStr);
+    avgTatLabel.setText("Average Turnaround Time: " + tatStr);
+
+    // Update every row in the table to have the same average value
+    for (int i = 0; i < resultTableModel.getRowCount(); i++) {
+        resultTableModel.setValueAt(wtStr, i, 6); // Column 6: AWT
+        resultTableModel.setValueAt(tatStr, i, 7); // Column 7: ATT
+    }
+}
     class GanttChartPanel extends JPanel {
         class GanttBlock {
             String processId;
@@ -243,6 +278,23 @@ public class SimulationView extends JPanel {
                 g2.drawString(startStr, x, y + BAR_HEIGHT + 15);
 
                 g2.setFont(new Font("SansSerif", Font.BOLD, 20));
+            }
+
+            // Inside GanttChartPanel.paintComponent
+            for (GanttBlock b : blocks) {
+                // ... (previous fillRect and drawRect code)
+
+                // Calculate perceived brightness to determine text color
+                double brightness = (b.color.getRed() * 0.299) + (b.color.getGreen() * 0.587) + (b.color.getBlue() * 0.114);
+                Color textColor = (brightness < 128) ? Color.WHITE : Color.BLACK;
+
+                // Use the IDLE color logic for IDLE blocks
+                if (b.processId.equals("IDLE")) {
+                    textColor = ThemeManager.isDarkTheme ? Color.WHITE : Color.BLACK;
+                }
+
+                g2.setColor(textColor);
+                // ... (draw the string using the calculated textColor)
             }
 
             if (totalTime > 0) {
